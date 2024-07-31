@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        ul { list-style-type: none; padding: 0; }
+        li { background: #f4f4f4; margin: 5px 0; padding: 10px; }
+        button { margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h1>To-Do List</h1>
+    <input type="text" id="taskInput" placeholder="New task">
+    <button onclick="addTask()">Add Task</button>
+    <ul id="taskList"></ul>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchTasks();
+        });
+
+        function fetchTasks() {
+            fetch('/tasks')
+                .then(response => response.json())
+                .then(tasks => {
+                    const taskList = document.getElementById('taskList');
+                    taskList.innerHTML = '';
+                    tasks.forEach((task) => {
+                        const li = document.createElement('li');
+                        li.textContent = task.content;
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.onclick = () => deleteTask(task.id);
+                        li.appendChild(deleteButton);
+                        taskList.appendChild(li);
+                    });
+                });
+        }
+
+        function addTask() {
+            const taskInput = document.getElementById('taskInput');
+            const task = taskInput.value;
+            if (task) {
+                fetch('/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task })
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.status === 'success') {
+                          taskInput.value = '';
+                          fetchTasks();
+                      }
+                  });
+            }
+        }
+
+        function deleteTask(taskId) {
+            fetch(`/tasks/${taskId}`, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        fetchTasks();
+                    }
+                });
+        }
+    </script>
+</body>
+</html>
